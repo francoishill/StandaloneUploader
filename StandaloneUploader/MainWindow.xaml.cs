@@ -178,6 +178,16 @@ namespace StandaloneUploader
 		{
 			get { return new WindowInteropHelper(this).Handle; }
 		}
+
+		private void aboutLabel_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+		{
+			new AboutWindow2(new ObservableCollection<DisplayItem>()
+			{
+				new DisplayItem("Author", "Francois Hill"),
+				new DisplayItem("Icon obtained from", "http://www.visualpharm.com", "http://www.visualpharm.com")
+			})
+			.ShowDialog();
+		}
 	}
 
 	public class UploadingItem : INotifyPropertyChanged
@@ -290,14 +300,27 @@ namespace StandaloneUploader
 			return tmplist;
 		}
 
+		private static object lockobject = new object();
 		private static string unsuccessfulUploadsDirpath = Path.GetDirectoryName(SettingsInterop.GetFullFilePathInLocalAppdata("tmp", cThisAppName, "UnsuccessfulUploads"));
 		private void AddToUnssuccesfulList()
 		{
 			if (!UnssuccessfulListOfFilepathsAndItem.ContainsKey(this))
 			{
-				string filepathToUnsuccessfulList = Path.Combine(unsuccessfulUploadsDirpath, DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss_fffff"));
-				File.WriteAllText(filepathToUnsuccessfulList, this.GetFileLineForApplicationRecovery());
-				UnssuccessfulListOfFilepathsAndItem.Add(this, filepathToUnsuccessfulList);
+			retrywritefile:
+				lock (lockobject)
+				{
+					try
+					{
+						string filepathToUnsuccessfulList = Path.Combine(unsuccessfulUploadsDirpath, DateTime.Now.ToString("yyyy_MM_dd HH_mm_ss_fffff"));
+						File.WriteAllText(filepathToUnsuccessfulList, this.GetFileLineForApplicationRecovery());
+						UnssuccessfulListOfFilepathsAndItem.Add(this, filepathToUnsuccessfulList);
+					}
+					catch
+					{
+						Thread.Sleep(500);
+						goto retrywritefile;
+					}
+				}
 			}
 		}
 
@@ -447,7 +470,7 @@ namespace StandaloneUploader
 						}
 						else
 							actionOnError("User cancelled upload");
-						
+
 						client.Dispose();
 						GC.Collect();
 						GC.WaitForPendingFinalizers();

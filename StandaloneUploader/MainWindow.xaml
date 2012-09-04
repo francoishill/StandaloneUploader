@@ -15,7 +15,8 @@
 		PreviewMouseDown='Window_PreviewMouseDown'>
 	<Grid Name='mainGrid'>
 		<ListBox Name='listboxCurrentlyUploading'
-				 ScrollViewer.CanContentScroll='False'>
+				 ScrollViewer.CanContentScroll='False'
+				 Margin='0 0 0 10'>
 			<ListBox.ItemTemplate>
 				<DataTemplate>
 					<Border CornerRadius='5'
@@ -98,5 +99,13 @@
 				</Style>
 			</ListBox.ItemContainerStyle>
 		</ListBox>
+		<Label Height='10'
+			   Padding='0'
+			   FontSize='8'
+			   Content='About'
+			   Foreground='White'
+			   HorizontalAlignment='Right'
+			   VerticalAlignment='Bottom'
+			   MouseLeftButtonUp='aboutLabel_MouseLeftButtonUp' />
 	</Grid>
 </Window>

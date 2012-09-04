@@ -54,19 +54,11 @@ namespace StandaloneUploader
 			//
 			//}
 
-			AppDomain.CurrentDomain.UnhandledException += (snder, exc) =>
-			{
-				Exception exception = (Exception)exc.ExceptionObject;
-				ShowError("Exception" + (exc.IsTerminating ? ", application will now exit" : "") + ":"
-					+ exception.Message + Environment.NewLine + exception.StackTrace);
-			};
 			//System.Windows.Forms.Application.ThreadException += (snder, exc) =>
 			//{
 			//    ShowError("Exception" + ":"
 			//        + exc.Exception.Message + Environment.NewLine + exc.Exception.StackTrace);
 			//};
-
-			AutoUpdating.CheckForUpdates(null, null);
 
 			if (Environment.GetCommandLineArgs().Length == 1)
 			{
@@ -74,36 +66,51 @@ namespace StandaloneUploader
 				Environment.Exit(0);
 			}
 
-			ApplicationRecoveryAndRestart.RegisterApplicationRecoveryAndRestart(
-			delegate
-			{
-				//TODO: Application Restart and Recovery is there but no use so far?
-				//ApplicationRecoveryAndRestart.WriteCrashReportFile("MonitorSystem", "Application crashed, more details not incorporated yet.");
-				mainwindow.SaveToDiskWhenCrashing();
-			},
-			delegate
-			{
-				//When successfully registered
-				//MessageBox.Show("Registered ApplicationRecoveryAndRestart");
-			},
-			(err) =>
-			{
-				System.Windows.Forms.Application.EnableVisualStyles();
-				System.Windows.Forms.MessageBox.Show(err, "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
-				Environment.Exit(0);
-			});
-
 			//base.OnStartup(e);
 			SingleInstanceApplicationManager<MainWindow>.CheckIfAlreadyRunningElseCreateNew(
 				(evt, mainwin) =>
 				{
+					//if (mainwin == null)
+					//    ShowError("Mainwindow is null, cannot pass commandline args: " + string.Join(Environment.NewLine, evt.CommandLineArgs));
 					AddUploadingItemToCurrentList(mainwin, evt.CommandLineArgs);
 				},
 				(args, mainwin) =>
 				{
+					AppDomain.CurrentDomain.UnhandledException += (snder, exc) =>
+					{
+						Exception exception = (Exception)exc.ExceptionObject;
+						ShowError("Exception" + (exc.IsTerminating ? ", application will now exit" : "") + ":"
+							+ exception.Message + Environment.NewLine + exception.StackTrace);
+					};
+
 					mainwindow = mainwin;
 					mainwin.Show();
 					AddUploadingItemToCurrentList(mainwin, args);
+
+					ThreadingInterop.PerformVoidFunctionSeperateThread(() =>
+					{
+						AutoUpdating.CheckForUpdates(null, null);
+					},
+					false);
+
+					ApplicationRecoveryAndRestart.RegisterApplicationRecoveryAndRestart(
+					delegate
+					{
+						//TODO: Application Restart and Recovery is there but no use so far?
+						//ApplicationRecoveryAndRestart.WriteCrashReportFile("MonitorSystem", "Application crashed, more details not incorporated yet.");
+						mainwindow.SaveToDiskWhenCrashing();
+					},
+					delegate
+					{
+						//When successfully registered
+						//MessageBox.Show("Registered ApplicationRecoveryAndRestart");
+					},
+					(err) =>
+					{
+						System.Windows.Forms.Application.EnableVisualStyles();
+						System.Windows.Forms.MessageBox.Show(err, "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
+						Environment.Exit(0);
+					});
 				});
 		}
 
