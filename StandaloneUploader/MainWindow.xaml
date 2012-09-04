@@ -54,7 +54,7 @@
 										Foreground='Maroon'
 										Opacity='0.5'
 										Visibility='{Binding CancelButtonVisibility}'
-										Click='buttonCancelButtonVisibility'/>
+										Click='buttonCancelButtonVisibility_Click'/>
 								<Button Content='Delete online file and restart upload'
 										Background='Transparent'
 										Margin='5 0 0 0'
@@ -64,7 +64,17 @@
 										Foreground='Maroon'
 										Opacity='0.5'
 										Visibility='{Binding DeleteOnlineFileAndRetryButtonVisibility}'
-										Click='buttonDeleteOnlineFileButtonVisibility' />
+										Click='buttonDeleteOnlineFileButtonVisibility_Click' />
+								<Button Content='Retry'
+										Background='Transparent'
+										Margin='5 0 0 0'
+										Padding='0'
+										VerticalAlignment='Center'
+										FontSize='10'
+										Foreground='Orange'
+										Opacity='0.5'
+										Visibility='{Binding RetryUploadButtonVisibility}'
+										Click='buttonRetryUpload_Click' />
 								<Label Content='{Binding CurrentProgressMessage}'
 									   DockPanel.Dock='Right'
 									   ToolTip='{Binding CurrentProgressMessage}'

@@ -108,18 +108,25 @@ namespace StandaloneUploader
 			return uploadingItem;
 		}
 
-		private void buttonCancelButtonVisibility(object sender, RoutedEventArgs e)
+		private void buttonCancelButtonVisibility_Click(object sender, RoutedEventArgs e)
 		{
 			var item = GetUploadingItemFromPossibleFrameworkElement(sender);
 			if (item == null) return;
 			item.CancelUploadingAsync();
 		}
 
-		private void buttonDeleteOnlineFileButtonVisibility(object sender, RoutedEventArgs e)
+		private void buttonDeleteOnlineFileButtonVisibility_Click(object sender, RoutedEventArgs e)
 		{
 			var item = GetUploadingItemFromPossibleFrameworkElement(sender);
 			if (item == null) return;
 			item.DeleteOnlineFileAndRetry();
+		}
+
+		private void buttonRetryUpload_Click(object sender, RoutedEventArgs e)
+		{
+			var item = GetUploadingItemFromPossibleFrameworkElement(sender);
+			if (item == null) return;
+			item.RetryUpload();
 		}
 
 		private void buttonTestCrash(object sender, RoutedEventArgs e)
@@ -227,6 +234,14 @@ namespace StandaloneUploader
 			set { _deleteonlinefileandretrybuttonvisibility = value; OnPropertyChanged("DeleteOnlineFileAndRetryButtonVisibility"); }
 		}
 
+		private Visibility _retryuploadbuttonvisibility;
+		public Visibility RetryUploadButtonVisibility
+		{
+			get { return _retryuploadbuttonvisibility; }
+			set { _retryuploadbuttonvisibility = value; OnPropertyChanged("RetryUploadButtonVisibility"); }
+		}
+
+
 		private bool AutoOverwriteIfExists;
 		public bool SuccessfullyUploaded = false;
 
@@ -251,6 +266,7 @@ namespace StandaloneUploader
 			this.AutoOverwriteIfExists = AutoOverwriteIfExists;
 			this.CancelButtonVisibility = AllowCancel ? Visibility.Visible : Visibility.Collapsed;
 			this.DeleteOnlineFileAndRetryButtonVisibility = Visibility.Collapsed;
+			this.RetryUploadButtonVisibility = Visibility.Collapsed;
 			if (AutoStartUploading)
 				StartUploading();
 			AddToUnssuccesfulList();
@@ -331,6 +347,11 @@ namespace StandaloneUploader
 			File.Delete(filepath);
 		}
 
+		public static bool HasUnsuccessfulItems()
+		{
+			return Directory.GetFiles(unsuccessfulUploadsDirpath, "*").Length > 0;
+		}
+
 		public static Dictionary<string, List<UploadingItem>> GetListFromUnssuccessfulDirectory_NotDelete(out List<string> fileListToBeDeleted)
 		{
 			Dictionary<string, List<UploadingItem>> tmpreturnDictionary = new Dictionary<string, List<UploadingItem>>();
@@ -397,9 +418,28 @@ namespace StandaloneUploader
 			}
 		}
 
+		public void RetryUpload()
+		{
+			this.RetryUploadButtonVisibility = Visibility.Collapsed;
+			this.StartUploading();
+		}
+
 		#region Ftp methods
 		Stopwatch stopwatchFromUploadStart;
 		private bool MustCancel = false;
+		private const int cTimeoutMilliseconds = 5000;
+
+		private class WebClientEx : WebClient
+		{
+
+			public int Timeout { get; set; }
+			protected override WebRequest GetWebRequest(Uri address)
+			{
+				var request = base.GetWebRequest(address);
+				request.Timeout = Timeout;
+				return request;
+			}
+		}
 		private bool FtpUploadFile(string localFilename, string fullFtpUrl, string userName, string password, Action<string> actionOnError, Action<string> actionOnStatusMessage, Action<int> actionOnProgressChanged_Percentage)
 		{
 			string ftpRootUri =
@@ -426,8 +466,9 @@ namespace StandaloneUploader
 				bool? createDirResult = CreateFTPDirectory_NullIfExisted(ftpRootUri, userName, password, null, actionOnError);
 				if (!createDirResult.HasValue || createDirResult.Value == true)//Null means already existed
 				{
-					using (System.Net.WebClient client = new System.Net.WebClient())
+					using (WebClientEx client = new WebClientEx())
 					{
+						client.Timeout = cTimeoutMilliseconds;
 						client.Credentials = new System.Net.NetworkCredential(userName, password);
 						//client.Headers.Add(HttpRequestHeader.UserAgent, "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)");
 
@@ -497,6 +538,7 @@ namespace StandaloneUploader
 			{
 				//create the directory
 				FtpWebRequest requestDir = (FtpWebRequest)FtpWebRequest.Create(new Uri(directory));
+				requestDir.Timeout = cTimeoutMilliseconds;
 				requestDir.Method = WebRequestMethods.Ftp.MakeDirectory;
 				requestDir.Credentials = new NetworkCredential(ftpUser, ftpPassword);
 				requestDir.UsePassive = true;
@@ -540,6 +582,7 @@ namespace StandaloneUploader
 		public static bool? FtpFileExists(string filePath, string ftpUser, string ftpPassword, Action<string> actionOnError)
 		{
 			var request = (FtpWebRequest)WebRequest.Create(filePath);
+			request.Timeout = cTimeoutMilliseconds;
 			request.Credentials = new NetworkCredential(ftpUser, ftpPassword);
 			request.Method = WebRequestMethods.Ftp.GetDateTimestamp;
 			request.UseBinary = true;
@@ -571,6 +614,7 @@ namespace StandaloneUploader
 			{
 				//create the directory
 				FtpWebRequest requestDir = (FtpWebRequest)FtpWebRequest.Create(new Uri(ftpFilePath));
+				requestDir.Timeout = cTimeoutMilliseconds;
 				requestDir.Method = WebRequestMethods.Ftp.DeleteFile;
 				requestDir.Credentials = new NetworkCredential(ftpUser, ftpPassword);
 				requestDir.UsePassive = true;

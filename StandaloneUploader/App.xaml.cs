@@ -60,9 +60,9 @@ namespace StandaloneUploader
 			//        + exc.Exception.Message + Environment.NewLine + exc.Exception.StackTrace);
 			//};
 
-			if (Environment.GetCommandLineArgs().Length == 1)
+			if (!UploadingItem.HasUnsuccessfulItems() && Environment.GetCommandLineArgs().Length == 1)
 			{
-				ShowWarning("Cannot start 'StandaloneUploader' without any commandline arguments.");
+				ShowWarning("Cannot start 'StandaloneUploader' without any commandline arguments (unless there were Unssuccessful items on previous run).");
 				Environment.Exit(0);
 			}
 
@@ -124,6 +124,9 @@ namespace StandaloneUploader
 		{
 			if (IsApplicationArestartedInstance(commandlineArgs) && commandlineArgs.Length == 2)//Only exe and /restart
 				return;//Exit here otherwise we add a blank item to list
+
+			if (commandlineArgs.Length == 1)//Could have been initiated without arguments, then Unssuccessful items will load
+				return;
 
 			bool autostartUploading = true;
 			if (commandlineArgs.Length < 5)//Means we dont at least have [thisexe, displayname, localpath, ftpurl, ftpusername]
