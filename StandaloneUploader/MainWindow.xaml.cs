@@ -39,6 +39,12 @@ namespace StandaloneUploader
 			LoadCurrentListFromCrashes();//Loads items if there are from crashes (not used only when /restart flag is passed, as it can crash again on startup??)
 		}
 
+		private void Window_Loaded(object sender, RoutedEventArgs e)
+		{
+			this.MaxWidth = SystemParameters.WorkArea.Height;
+			this.MaxHeight = SystemParameters.WorkArea.Width;
+		}
+
 		private void LoadUnssuccessfulList()
 		{
 			List<string> outFilesToBeDeleted;
@@ -159,6 +165,12 @@ namespace StandaloneUploader
 				return;
 			lastNotSmallPos = new Point(this.Left, this.Top);
 			this.mainGrid.LayoutTransform = smallScale;
+			if (this.SizeToContent == System.Windows.SizeToContent.WidthAndHeight)
+			{
+				this.SizeToContent = System.Windows.SizeToContent.Manual;
+				this.UpdateLayout();
+				this.SizeToContent = System.Windows.SizeToContent.WidthAndHeight;
+			}
 			this.UpdateLayout();
 			this.Left = SystemParameters.WorkArea.Right - this.ActualWidth;
 			this.Top = SystemParameters.WorkArea.Bottom - this.ActualHeight;
@@ -173,6 +185,12 @@ namespace StandaloneUploader
 				this.Top = lastNotSmallPos.Value.Y;
 			}
 			lastNotSmallPos = null;
+			if (this.SizeToContent == System.Windows.SizeToContent.WidthAndHeight)
+			{
+				this.SizeToContent = System.Windows.SizeToContent.Manual;
+				this.UpdateLayout();
+				this.SizeToContent = System.Windows.SizeToContent.WidthAndHeight;
+			}
 			this.UpdateLayout();
 		}
 
@@ -193,6 +211,9 @@ namespace StandaloneUploader
 				new DisplayItem("Author", "Francois Hill"),
 				new DisplayItem("Icon obtained from", "http://www.visualpharm.com", "http://www.visualpharm.com")
 			})
+			{
+				Owner = this
+			}
 			.ShowDialog();
 		}
 	}
@@ -427,7 +448,7 @@ namespace StandaloneUploader
 		#region Ftp methods
 		Stopwatch stopwatchFromUploadStart;
 		private bool MustCancel = false;
-		private const int cTimeoutMilliseconds = 5000;
+		private const int cTimeoutMilliseconds = 10000;
 
 		private class WebClientEx : WebClient
 		{
