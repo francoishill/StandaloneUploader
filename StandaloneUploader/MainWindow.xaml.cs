@@ -216,6 +216,26 @@ namespace StandaloneUploader
 			}
 			.ShowDialog();
 		}
+
+		ScaleTransform currentScale = new ScaleTransform(1, 1);
+		private void Window_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+		{
+			if (!IsSmall())
+			{
+				this.mainGrid.LayoutTransform = currentScale;
+				e.Handled = true;
+				if (e.Delta > 0)//Up
+				{
+					currentScale.ScaleX += 0.05;
+					currentScale.ScaleY += 0.05;
+				}
+				else if (e.Delta < 0)//Down
+				{
+					currentScale.ScaleX -= 0.05;
+					currentScale.ScaleY -= 0.05;
+				}
+			}
+		}
 	}
 
 	public class UploadingItem : INotifyPropertyChanged
@@ -411,7 +431,10 @@ namespace StandaloneUploader
 							(err) => { this.CurrentProgressMessage = "Error: " + err; },
 							(status) => { this.CurrentProgressMessage = status; },
 							(progress) => { if (progress != this.CurrentProgressPercentage) this.CurrentProgressPercentage = progress != 100 ? progress : 0; }))
+						{
 							this.CurrentProgressMessage = "Successfully uploaded.";
+							AddSuccessfulUploadToHistory();
+						}
 						UploadsInProgress.Remove(this);//Removes although could have failed, so that next can start
 						if (UploadsQueued.Count > 0)
 							UploadsQueued.Dequeue().StartUploading();
@@ -421,6 +444,16 @@ namespace StandaloneUploader
 				}
 			});
 			uploadingThread.Start();
+		}
+
+		private void AddSuccessfulUploadToHistory()
+		{
+			Logging.LogSuccessToFile(
+				string.Format("Successfully uploaded, localpath = '{0}', ftpurl = '{1}', username = '{2}'",
+					this.LocalPath, this.FtpUrl, this.FtpUsername),
+				Logging.ReportingFrequencies.Daily,
+				cThisAppName,
+				"SuccessHistory");
 		}
 
 		public void CancelUploadingAsync()

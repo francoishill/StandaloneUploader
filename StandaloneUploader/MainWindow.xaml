@@ -13,6 +13,7 @@
 		UseLayoutRounding='True'
 		PreviewMouseLeftButtonDown='Window_PreviewMouseLeftButtonDown'
 		PreviewMouseDown='Window_PreviewMouseDown'
+		PreviewMouseWheel='Window_PreviewMouseWheel'
 		Loaded='Window_Loaded'>
 	<Grid Name='mainGrid'>
 		<ListBox Name='listboxCurrentlyUploading'
