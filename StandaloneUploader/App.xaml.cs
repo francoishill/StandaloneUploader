@@ -122,24 +122,26 @@ namespace StandaloneUploader
 
 		private void AddUploadingItemToCurrentList(MainWindow mainwindow, string[] commandlineArgs)
 		{
-			if (IsApplicationArestartedInstance(commandlineArgs) && commandlineArgs.Length == 2)//Only exe and /restart
+			if (IsApplicationArestartedInstance(commandlineArgs) 
+				&& commandlineArgs.Length == 2 && commandlineArgs[1].EndsWith("/restart", StringComparison.InvariantCultureIgnoreCase))//Only exe and /restart
 				return;//Exit here otherwise we add a blank item to list
 
 			if (commandlineArgs.Length == 1)//Could have been initiated without arguments, then Unssuccessful items will load
 				return;
 
 			bool autostartUploading = true;
-			if (commandlineArgs.Length < 5)//Means we dont at least have [thisexe, displayname, localpath, ftpurl, ftpusername]
+			if (commandlineArgs.Length < 5)//Means we dont at least have [thisexe, protocol, displayname, localpath, url]
 				autostartUploading = false;
 
 			string DisplayName = commandlineArgs.Length >= 2 ? commandlineArgs[1] : "[NO DISPLAY NAME]";
-			string LocalPath = commandlineArgs.Length >= 3 ? commandlineArgs[2] : "[NO LOCAL PATH]";
-			string FtpUrl = commandlineArgs.Length >= 4 ? commandlineArgs[3] : "[NO FTP URL]";
-			string FtpUsername = commandlineArgs.Length >= 5 ? commandlineArgs[4] : "[NO FTP USERNAME]";
-			string FtpPassword = commandlineArgs.Length >= 6 ? commandlineArgs[5] : "";
-			bool AutoOverwriteIfExists = commandlineArgs.Length >= 7 && commandlineArgs[6].Trim('\"').Equals("overwrite", StringComparison.InvariantCultureIgnoreCase);
+			string Protocol = commandlineArgs.Length >= 3 ? commandlineArgs[2] : "[NO PROTOCOL]";
+			string LocalPath = commandlineArgs.Length >= 4 ? commandlineArgs[3] : "[NO LOCAL PATH]";
+			string FtpUrl = commandlineArgs.Length >= 5 ? commandlineArgs[4] : "[NO FTP URL]";
+			string FtpUsername = commandlineArgs.Length >= 6 ? commandlineArgs[5] : "[NO FTP USERNAME]";
+			string FtpPassword = commandlineArgs.Length >= 7 ? commandlineArgs[6] : "";
+			bool AutoOverwriteIfExists = commandlineArgs.Length >= 8 && commandlineArgs[7].Trim('\"').Equals("overwrite", StringComparison.InvariantCultureIgnoreCase);
 
-			mainwindow.AddUploadingItem(DisplayName, LocalPath, FtpUrl, FtpUsername, FtpPassword, AutoOverwriteIfExists, autostartUploading);
+			mainwindow.AddUploadingItem(DisplayName, UploadingItem.ParseProtocolTypeFromString(Protocol), LocalPath, FtpUrl, FtpUsername, FtpPassword, AutoOverwriteIfExists, autostartUploading);
 		}
 	}
 }

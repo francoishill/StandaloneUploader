@@ -68,17 +68,19 @@ namespace StandaloneUploader
 			}
 		}
 
-		public void AddUploadingItem(string displayName, string LocalPath, string FtpUrl, string FtpUsername, string FtpPassword, bool AutoOverwriteIfExists, bool AutoStartUploading)
+		public void AddUploadingItem(string displayName, UploadingProtocolTypes ProtocolType, string LocalPath, string FtpUrl, string FtpUsername, string FtpPassword, bool AutoOverwriteIfExists, bool AutoStartUploading)
 		{
 			var alreadyInListCount =
-				currentlyUploadingList.Count(it =>
-					it.PropertiesEqualsTo(displayName, LocalPath, FtpUrl, FtpUsername, FtpPassword));
+				currentlyUploadingList
+				.Where(it => !it.SuccessfullyUploaded)
+				.Count(it =>
+					it.PropertiesEqualsTo(displayName, ProtocolType, LocalPath, FtpUrl, FtpUsername, FtpPassword));
 			if (alreadyInListCount > 0)
 			{
 				App.ShowError("Cannot add another item with same properties.");
 				return;
 			}
-			var itemtoadd = new UploadingItem(displayName, LocalPath, FtpUrl, FtpUsername, FtpPassword, AutoOverwriteIfExists, AutoStartUploading, true);
+			var itemtoadd = new UploadingItem(displayName, ProtocolType, LocalPath, FtpUrl, AutoOverwriteIfExists, FtpUsername, FtpPassword, AutoStartUploading, true);
 			AddUploadingItem(itemtoadd);
 		}
 
@@ -133,6 +135,18 @@ namespace StandaloneUploader
 			var item = GetUploadingItemFromPossibleFrameworkElement(sender);
 			if (item == null) return;
 			item.RetryUpload();
+		}
+
+		private void buttonRemoveFromList_Click(object sender, RoutedEventArgs e)
+		{
+			var item = GetUploadingItemFromPossibleFrameworkElement(sender);
+			if (item == null) return;
+			if (currentlyUploadingList.Contains(item))
+			{
+				currentlyUploadingList.Remove(item);
+				if (currentlyUploadingList.Count == 0)
+					this.Close();//Exit application
+			}
 		}
 
 		private void buttonTestCrash(object sender, RoutedEventArgs e)
@@ -246,6 +260,7 @@ namespace StandaloneUploader
 		private static Queue<UploadingItem> UploadsQueued = new Queue<UploadingItem>();
 
 		public string DisplayName { get; private set; }
+		private UploadingProtocolTypes ProtocolType;
 
 		private int _currentprogresspercentage;
 		public int CurrentProgressPercentage
@@ -282,6 +297,13 @@ namespace StandaloneUploader
 			set { _retryuploadbuttonvisibility = value; OnPropertyChanged("RetryUploadButtonVisibility"); }
 		}
 
+		private Visibility _removefromlistbuttonvisibility;
+		public Visibility RemoveFromListButtonVisibility
+		{
+			get { return _removefromlistbuttonvisibility; }
+			set { _removefromlistbuttonvisibility = value; OnPropertyChanged("RemoveFromListButtonVisibility"); }
+		}
+
 
 		private bool AutoOverwriteIfExists;
 		public bool SuccessfullyUploaded = false;
@@ -295,32 +317,43 @@ namespace StandaloneUploader
 
 		public UploadingItem() { AddToUnssuccesfulList(); }
 
-		public UploadingItem(string DisplayName, string LocalPath, string FtpUrl, string FtpUsername, string FtpPassword, bool AutoOverwriteIfExists, bool AutoStartUploading, bool AllowCancel)
+		public UploadingItem(string DisplayName, UploadingProtocolTypes ProtocolType, string LocalPath, string FtpUrl, bool AutoOverwriteIfExists, string FtpUsername, string FtpPassword, bool AutoStartUploading, bool AllowCancel)
 		{
 			this.DisplayName = DisplayName;
+			this.ProtocolType = ProtocolType;
 			this.CurrentProgressPercentage = 0;
 			this.CurrentProgressMessage = "Item queued for upload";
 			this.LocalPath = LocalPath;
 			this.FtpUrl = FtpUrl;
+			this.AutoOverwriteIfExists = AutoOverwriteIfExists;
 			this.FtpUsername = FtpUsername;
 			this.FtpPassword = FtpPassword;
-			this.AutoOverwriteIfExists = AutoOverwriteIfExists;
 			this.CancelButtonVisibility = AllowCancel ? Visibility.Visible : Visibility.Collapsed;
 			this.DeleteOnlineFileAndRetryButtonVisibility = Visibility.Collapsed;
 			this.RetryUploadButtonVisibility = Visibility.Collapsed;
+			this.RemoveFromListButtonVisibility = Visibility.Collapsed;
 			if (AutoStartUploading)
 				StartUploading();
 			AddToUnssuccesfulList();
 		}
 
-		public bool PropertiesEqualsTo(string DisplayName, string LocalPath, string FtpUrl, string FtpUsername, string FtpPassword)
+		public bool PropertiesEqualsTo(string DisplayName, UploadingProtocolTypes ProtocolType, string LocalPath, string FtpUrl, string FtpUsername, string FtpPassword)
 		{
 			return
 				this.DisplayName == DisplayName
+				&& this.ProtocolType == ProtocolType
 				&& this.LocalPath == LocalPath
 				&& this.FtpUrl == FtpUrl
 				&& this.FtpUsername == FtpUsername
 				&& this.FtpPassword == FtpPassword;
+		}
+
+		public static UploadingProtocolTypes ParseProtocolTypeFromString(string strToParse)
+		{
+			UploadingProtocolTypes pt;
+			if (!Enum.TryParse<UploadingProtocolTypes>(strToParse, out pt))
+				pt = UploadingProtocolTypes.Unknown;
+			return pt;
 		}
 
 		public static List<UploadingItem> GetItemsFromFile(string filepath, bool deletefileIfSuccessful = false)//Can be for crash items or unssuccessful items
@@ -336,8 +369,15 @@ namespace StandaloneUploader
 			foreach (var line in lines)
 			{
 				var pipeSplits = line.Split('|');
-				if (pipeSplits.Length == 5)//displayname, localpath, ftpurl, username, password
-					tmplist.Add(new UploadingItem(pipeSplits[0], pipeSplits[1], pipeSplits[2], pipeSplits[3], pipeSplits[4], false, true, true));
+				if (pipeSplits.Length >= 4)//displayname, protocol, localpath, ftpurl, [username,] [password]
+					tmplist.Add(new UploadingItem(
+						pipeSplits[0],
+						ParseProtocolTypeFromString(pipeSplits[1]),
+						pipeSplits[2],
+						pipeSplits[3],
+						pipeSplits[4].Equals("true", StringComparison.InvariantCultureIgnoreCase),
+						pipeSplits.Length >= 6 ? pipeSplits[5] : null,
+						pipeSplits.Length >= 7 ? pipeSplits[6] : null, true, true));
 				else
 				{
 					allLinesRead = false;
@@ -383,9 +423,12 @@ namespace StandaloneUploader
 
 		private void RemoveFromUnsuccessfulList()
 		{
-			string filepath = UnssuccessfulListOfFilepathsAndItem[this];
-			UnssuccessfulListOfFilepathsAndItem.Remove(this);
-			File.Delete(filepath);
+			if (UnssuccessfulListOfFilepathsAndItem.ContainsKey(this))
+			{
+				string filepath = UnssuccessfulListOfFilepathsAndItem[this];
+				UnssuccessfulListOfFilepathsAndItem.Remove(this);
+				File.Delete(filepath);
+			}
 		}
 
 		public static bool HasUnsuccessfulItems()
@@ -411,7 +454,12 @@ namespace StandaloneUploader
 
 		public string GetFileLineForApplicationRecovery()
 		{
-			return string.Join("|", this.DisplayName, this.LocalPath, this.FtpUrl, this.FtpUsername, this.FtpPassword);
+			if (this.FtpUsername != null && this.FtpPassword != null)
+				return string.Join("|", this.DisplayName, this.ProtocolType.ToString(), this.LocalPath, this.FtpUrl, this.AutoOverwriteIfExists, this.FtpUsername, this.FtpPassword);
+			else if (this.FtpUsername != null)
+				return string.Join("|", this.DisplayName, this.ProtocolType.ToString(), this.LocalPath, this.FtpUrl, this.AutoOverwriteIfExists, this.FtpUsername);
+			else
+				return string.Join("|", this.DisplayName, this.ProtocolType.ToString(), this.LocalPath, this.FtpUrl, this.AutoOverwriteIfExists);
 		}
 
 		Thread uploadingThread;
@@ -426,18 +474,86 @@ namespace StandaloneUploader
 					if (UploadsInProgress.Count == 0)
 					{
 						UploadsInProgress.Add(this);
-						this.CurrentProgressMessage = "Upload started, please wait...";
-						if (FtpUploadFile(this.LocalPath, this.FtpUrl, this.FtpUsername, this.FtpPassword,
-							(err) => { this.CurrentProgressMessage = "Error: " + err; },
-							(status) => { this.CurrentProgressMessage = status; },
-							(progress) => { if (progress != this.CurrentProgressPercentage) this.CurrentProgressPercentage = progress != 100 ? progress : 0; }))
+
+						try
 						{
-							this.CurrentProgressMessage = "Successfully uploaded.";
-							AddSuccessfulUploadToHistory();
+							if (this.ProtocolType == UploadingProtocolTypes.Ftp)
+							{
+								this.CurrentProgressMessage = "Upload started, please wait...";
+								if (FtpUploadFile(this.LocalPath, this.FtpUrl, this.FtpUsername, this.FtpPassword,
+									(err) => { this.CurrentProgressMessage = "Error: " + err; },
+									(status) => { this.CurrentProgressMessage = status; },
+									(progress) => { if (progress != this.CurrentProgressPercentage) this.CurrentProgressPercentage = progress != 100 ? progress : 0; }))
+								{
+									this.CurrentProgressMessage = "Successfully uploaded.";
+									AddSuccessfulUploadToHistory();
+									this.RemoveFromListButtonVisibility = Visibility.Visible;
+								}
+							}
+							else if (this.ProtocolType == UploadingProtocolTypes.Ownapps)
+							{
+								this.CurrentProgressMessage = "Upload started, please wait...";
+								string err;
+								bool? uploadresult = PhpUploadingInterop.PhpUploadFile(this.LocalPath, this.FtpUrl, out err,
+									(progress, bytespersec) =>
+									{
+										if (progress != this.CurrentProgressPercentage) this.CurrentProgressPercentage = progress != 100 ? progress : 0;
+										this.CurrentProgressMessage = string.Format("{0:0.###} kB/s", bytespersec / 1024D);
+									},
+									ref MustCancel,
+									null,
+									delegate { return true; });
+
+								if (!uploadresult.HasValue)//null means the file already existed
+								{
+									if (!this.AutoOverwriteIfExists)
+									{
+										this.CurrentProgressMessage = "File already exists online";
+										this.DeleteOnlineFileAndRetryButtonVisibility = Visibility.Visible;
+										return;//Exit jumps to the finally section
+									}
+									else//Auto overwrite
+									{
+										bool? deleteResult = PhpUploadingInterop.PhpDeleteFile(this.FtpUrl, out err, delegate { return true; });
+										if (deleteResult == false)//Could not delete
+										{
+											this.CurrentProgressMessage = "Unable to delete file";
+											this.DeleteOnlineFileAndRetryButtonVisibility = Visibility.Visible;
+											return;//Exit jumps to the finally section
+										}
+										else//true=successfully deleted, null= did not exist
+										{
+											UploadsQueued.Enqueue(this);
+											return;//Exit jumps to the finally section
+										}
+									}
+								}
+								else if (uploadresult.Value == false)//Failed
+								{
+									this.CurrentProgressMessage = "Unable to upload: " + err;
+									return;//Exit jumps to the finally section
+								}
+
+								this.CurrentProgressMessage = "Successfully uploaded.";
+								AddSuccessfulUploadToHistory();
+								this.RemoveFromListButtonVisibility = Visibility.Visible;
+								if (!this.MustCancel)
+								{
+									//actionOnStatusMessage("Successfully uploaded.");// + localFilename);
+									this.CancelButtonVisibility = Visibility.Collapsed;
+									this.SuccessfullyUploaded = true;
+									RemoveFromUnsuccessfulList();
+								}
+							}
+							else
+								UserMessages.ShowErrorMessage("Only supports Ftp and Ownapps protocols currently");
 						}
-						UploadsInProgress.Remove(this);//Removes although could have failed, so that next can start
-						if (UploadsQueued.Count > 0)
-							UploadsQueued.Dequeue().StartUploading();
+						finally
+						{
+							UploadsInProgress.Remove(this);//Removes although could have failed, so that next can start
+							if (UploadsQueued.Count > 0)
+								UploadsQueued.Dequeue().StartUploading();
+						}
 					}
 					else
 						UploadsQueued.Enqueue(this);
@@ -463,13 +579,30 @@ namespace StandaloneUploader
 
 		public void DeleteOnlineFileAndRetry()
 		{
-			if (DeleteFTPfile(this.FtpUrl, this.FtpUsername, this.FtpPassword,
-				err => this.CurrentProgressMessage = "Error: " + err,
-				status => this.CurrentProgressMessage = status))
+			if (this.ProtocolType == UploadingProtocolTypes.Ownapps)
 			{
-				this.DeleteOnlineFileAndRetryButtonVisibility = Visibility.Collapsed;
-				this.StartUploading();
+				string err;
+				bool? deleteSuccess = PhpUploadingInterop.PhpDeleteFile(this.FtpUrl, out err, delegate { return true; });
+				if (deleteSuccess == false)//Could not delete (true is success, null is did not exist)
+					this.CurrentProgressMessage = "Error: " + err;
+				else//null meanse did not exist, true means deleted
+				{
+					this.DeleteOnlineFileAndRetryButtonVisibility = Visibility.Collapsed;
+					this.StartUploading();
+				}
 			}
+			else if (this.ProtocolType == UploadingProtocolTypes.Ftp)
+			{
+				if (DeleteFTPfile(this.FtpUrl, this.FtpUsername, this.FtpPassword, true,
+					err => this.CurrentProgressMessage = "Error: " + err,
+					status => this.CurrentProgressMessage = status))
+				{
+					this.DeleteOnlineFileAndRetryButtonVisibility = Visibility.Collapsed;
+					this.StartUploading();
+				}
+			}
+			else
+				UserMessages.ShowErrorMessage("Only supports Ftp and Ownapps protocols currently");
 		}
 
 		public void RetryUpload()
@@ -496,13 +629,14 @@ namespace StandaloneUploader
 		}
 		private bool FtpUploadFile(string localFilename, string fullFtpUrl, string userName, string password, Action<string> actionOnError, Action<string> actionOnStatusMessage, Action<int> actionOnProgressChanged_Percentage)
 		{
+			WebInterop.EnsureHttpsTrustAll();
 			string ftpRootUri =
 					fullFtpUrl.Substring(0, fullFtpUrl.Length - Path.GetFileName(fullFtpUrl).Length)
 				.Replace('\\', '/')
 				.TrimEnd('/');
 			try
 			{
-				bool? fileAlreadyExists = FtpFileExists(this.FtpUrl, this.FtpUsername, this.FtpPassword, actionOnError);
+				bool? fileAlreadyExists = FtpFileExists(this.FtpUrl, this.FtpUsername, this.FtpPassword, true, actionOnError);
 				if (!fileAlreadyExists.HasValue)
 					return false;
 				else if (fileAlreadyExists.Value == true)
@@ -514,10 +648,17 @@ namespace StandaloneUploader
 						return false;
 					}
 					else//Auto overwrite
-						DeleteFTPfile(this.FtpUrl, this.FtpUsername, this.FtpPassword, actionOnError, actionOnStatusMessage);
+					{
+						if (!DeleteFTPfile(this.FtpUrl, this.FtpUsername, this.FtpPassword, true, actionOnError, actionOnStatusMessage))
+						{
+							this.CurrentProgressMessage = "Unable to delete file";
+							this.DeleteOnlineFileAndRetryButtonVisibility = Visibility.Visible;
+							return false;
+						}
+					}
 				}
 
-				bool? createDirResult = CreateFTPDirectory_NullIfExisted(ftpRootUri, userName, password, null, actionOnError);
+				bool? createDirResult = CreateFTPDirectory_NullIfExisted(ftpRootUri, userName, password, null, true, actionOnError);
 				if (!createDirResult.HasValue || createDirResult.Value == true)//Null means already existed
 				{
 					using (WebClientEx client = new WebClientEx())
@@ -586,7 +727,7 @@ namespace StandaloneUploader
 			return false;
 		}
 
-		public static bool? CreateFTPDirectory_NullIfExisted(string directory, string ftpUser, string ftpPassword, int? timeout, Action<string> actionOnError)
+		public static bool? CreateFTPDirectory_NullIfExisted(string directory, string ftpUser, string ftpPassword, int? timeout, bool EnableSSL, Action<string> actionOnError)
 		{
 			try
 			{
@@ -598,6 +739,7 @@ namespace StandaloneUploader
 				requestDir.UsePassive = true;
 				requestDir.UseBinary = true;
 				requestDir.KeepAlive = false;
+				requestDir.EnableSsl = EnableSSL;
 				if (timeout.HasValue)
 					requestDir.Timeout = timeout.Value;
 				FtpWebResponse response = (FtpWebResponse)(requestDir.GetResponse());
@@ -633,12 +775,15 @@ namespace StandaloneUploader
 			}
 		}
 
-		public static bool? FtpFileExists(string filePath, string ftpUser, string ftpPassword, Action<string> actionOnError)
+		public static bool? FtpFileExists(string filePath, string ftpUser, string ftpPassword, bool EnableSsl, Action<string> actionOnError)
 		{
+			WebInterop.EnsureHttpsTrustAll();
 			var request = (FtpWebRequest)WebRequest.Create(filePath);
 			request.Timeout = cTimeoutMilliseconds;
 			request.Credentials = new NetworkCredential(ftpUser, ftpPassword);
 			request.Method = WebRequestMethods.Ftp.GetDateTimestamp;
+			request.EnableSsl = EnableSsl;
+			request.UsePassive = true;
 			request.UseBinary = true;
 			try
 			{
@@ -648,6 +793,7 @@ namespace StandaloneUploader
 			}
 			catch (WebException ex)
 			{
+				int COMMAND_NOT_IMPLEMENTED_FROM_WORK_WTF;
 				FtpWebResponse response = (FtpWebResponse)ex.Response;
 				if (response.StatusCode ==
 					FtpStatusCode.ActionNotTakenFileUnavailable)
@@ -662,7 +808,7 @@ namespace StandaloneUploader
 			}
 		}
 
-		public static bool DeleteFTPfile(string ftpFilePath, string ftpUser, string ftpPassword, Action<string> actionOnError, Action<string> actionOnStatus)
+		public static bool DeleteFTPfile(string ftpFilePath, string ftpUser, string ftpPassword, bool EnableSSL, Action<string> actionOnError, Action<string> actionOnStatus)
 		{
 			try
 			{
@@ -674,6 +820,7 @@ namespace StandaloneUploader
 				requestDir.UsePassive = true;
 				requestDir.UseBinary = true;
 				requestDir.KeepAlive = false;
+				requestDir.EnableSsl = EnableSSL;
 
 				actionOnStatus("Attempting to delete file from server: " + ftpFilePath);
 				FtpWebResponse response = (FtpWebResponse)(requestDir.GetResponse());
@@ -702,6 +849,7 @@ namespace StandaloneUploader
 				}
 			}
 		}
+
 		#endregion Ftp methods
 
 		public event PropertyChangedEventHandler PropertyChanged = new PropertyChangedEventHandler(delegate { });

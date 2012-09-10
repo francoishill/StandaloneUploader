@@ -78,6 +78,16 @@
 										Opacity='0.5'
 										Visibility='{Binding RetryUploadButtonVisibility}'
 										Click='buttonRetryUpload_Click' />
+								<Button Content='Remove from list'
+										Background='Transparent'
+										Margin='5 0 0 0'
+										Padding='0'
+										VerticalAlignment='Center'
+										FontSize='10'
+										Foreground='Orange'
+										Opacity='0.5'
+										Visibility='{Binding RemoveFromListButtonVisibility}'
+										Click='buttonRemoveFromList_Click' />
 								<Label Content='{Binding CurrentProgressMessage}'
 									   DockPanel.Dock='Right'
 									   ToolTip='{Binding CurrentProgressMessage}'
