@@ -250,6 +250,13 @@ namespace StandaloneUploader
 				}
 			}
 		}
+
+		private void frameworkElementSourceUpdated(object sender, DataTransferEventArgs e)
+		{
+			FrameworkElement fe = sender as FrameworkElement;
+			if (fe == null) return;
+			fe.UpdateLayout();
+		}
 	}
 
 	public class UploadingItem : INotifyPropertyChanged
@@ -465,6 +472,8 @@ namespace StandaloneUploader
 		Thread uploadingThread;
 		private void StartUploading()
 		{
+			this.MustCancel = false;
+
 			uploadingThread = new Thread((ThreadStart)delegate
 			{
 				if (!Path.GetExtension(this.LocalPath).Equals(Path.GetExtension(this.FtpUrl)))
@@ -531,6 +540,7 @@ namespace StandaloneUploader
 								else if (uploadresult.Value == false)//Failed
 								{
 									this.CurrentProgressMessage = "Unable to upload: " + err;
+									this.RetryUploadButtonVisibility = Visibility.Visible;
 									return;//Exit jumps to the finally section
 								}
 

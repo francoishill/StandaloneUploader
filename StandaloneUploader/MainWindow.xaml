@@ -29,6 +29,7 @@
 							BorderThickness='1'>
 						<DockPanel LastChildFill='True'>
 							<Label Content='{Binding DisplayName}'
+								   SourceUpdated='frameworkElementSourceUpdated'
 								   DockPanel.Dock='Top'
 								   FontSize='10'
 								   Foreground='#FF0D6CBA' />
@@ -47,7 +48,8 @@
 											 Width='300'
 											 Height='10'
 											 DockPanel.Dock='Top'
-											 Value='{Binding CurrentProgressPercentage}' />
+											 Value='{Binding CurrentProgressPercentage}'
+											 SourceUpdated='frameworkElementSourceUpdated' />
 								<Button Content='Cancel'
 										Background='Transparent'
 										Margin='5 0 0 0'
@@ -57,6 +59,7 @@
 										Foreground='Maroon'
 										Opacity='0.5'
 										Visibility='{Binding CancelButtonVisibility}'
+										SourceUpdated='frameworkElementSourceUpdated'
 										Click='buttonCancelButtonVisibility_Click'/>
 								<Button Content='Delete online file and restart upload'
 										Background='Transparent'
@@ -67,6 +70,7 @@
 										Foreground='Maroon'
 										Opacity='0.5'
 										Visibility='{Binding DeleteOnlineFileAndRetryButtonVisibility}'
+										SourceUpdated='frameworkElementSourceUpdated'
 										Click='buttonDeleteOnlineFileButtonVisibility_Click' />
 								<Button Content='Retry'
 										Background='Transparent'
@@ -77,6 +81,7 @@
 										Foreground='Orange'
 										Opacity='0.5'
 										Visibility='{Binding RetryUploadButtonVisibility}'
+										SourceUpdated='frameworkElementSourceUpdated'
 										Click='buttonRetryUpload_Click' />
 								<Button Content='Remove from list'
 										Background='Transparent'
@@ -87,8 +92,10 @@
 										Foreground='Orange'
 										Opacity='0.5'
 										Visibility='{Binding RemoveFromListButtonVisibility}'
+										SourceUpdated='frameworkElementSourceUpdated'
 										Click='buttonRemoveFromList_Click' />
 								<Label Content='{Binding CurrentProgressMessage}'
+									   SourceUpdated='frameworkElementSourceUpdated'
 									   DockPanel.Dock='Right'
 									   ToolTip='{Binding CurrentProgressMessage}'
 									   Foreground='#888' />
@@ -101,12 +108,14 @@
 										<Label Content='Locally:'
 											   FontSize='8' />
 										<Label Content='{Binding LocalPath}'
+											   SourceUpdated='frameworkElementSourceUpdated'
 											   FontSize='8' />
 									</StackPanel>
 									<StackPanel Orientation='Horizontal'>
 										<Label Content='Ftp url:'
 											   FontSize='8' />
 										<Label Content='{Binding FtpUrl}'
+											   SourceUpdated='frameworkElementSourceUpdated'
 											   FontSize='8' />
 									</StackPanel>
 								</StackPanel>
