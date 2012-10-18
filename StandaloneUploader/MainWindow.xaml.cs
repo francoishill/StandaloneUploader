@@ -151,7 +151,7 @@ namespace StandaloneUploader
 
 		private void buttonTestCrash(object sender, RoutedEventArgs e)
 		{
-			ApplicationRecoveryAndRestart.TestCrash(false, (s) => { return true; });
+			OwnUnhandledExceptionHandler.TestCrash(false, (s) => { return true; });
 		}
 
 		private void Window_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
