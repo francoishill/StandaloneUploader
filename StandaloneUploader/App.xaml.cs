@@ -18,7 +18,7 @@ namespace StandaloneUploader
 
 		protected override void OnExit(ExitEventArgs e)
 		{
-			ApplicationRecoveryAndRestart.UnregisterApplicationRecoveryAndRestart();
+			ApplicationRecoveryAndRestart.UnregisterForRecoveryAndRestart();
 			base.OnExit(e);
 		}
 
@@ -83,17 +83,14 @@ namespace StandaloneUploader
 							+ exception.Message + Environment.NewLine + exception.StackTrace);
 					};
 
-					mainwindow = mainwin;
-					mainwin.Show();
-					AddUploadingItemToCurrentList(mainwin, args);
-
 					ThreadingInterop.PerformVoidFunctionSeperateThread(() =>
 					{
 						AutoUpdating.CheckForUpdates(null, null);
 					},
 					false);
 
-					ApplicationRecoveryAndRestart.RegisterApplicationRecoveryAndRestart(
+					bool mustAddToList = true;
+					ApplicationRecoveryAndRestart.RegisterForRecoveryAndRestart(
 					delegate
 					{
 						//TODO: Application Restart and Recovery is there but no use so far?
@@ -102,29 +99,26 @@ namespace StandaloneUploader
 					},
 					delegate
 					{
+						mustAddToList = false;//Exit here otherwise we add a blank item to list
+					},
+					delegate
+					{
 						//When successfully registered
 						//MessageBox.Show("Registered ApplicationRecoveryAndRestart");
-					},
-					(err) =>
-					{
-						System.Windows.Forms.Application.EnableVisualStyles();
-						System.Windows.Forms.MessageBox.Show(err, "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
-						Environment.Exit(0);
 					});
-				});
-		}
 
-		private bool IsApplicationArestartedInstance(string[] commandlineArgs)
-		{
-			return commandlineArgs.Length > 1
-				&& commandlineArgs[1] == "/restart";
+					mainwindow = mainwin;
+					mainwin.Show();
+					if (mustAddToList)
+						AddUploadingItemToCurrentList(mainwin, args);
+				});
 		}
 
 		private void AddUploadingItemToCurrentList(MainWindow mainwindow, string[] commandlineArgs)
 		{
-			if (IsApplicationArestartedInstance(commandlineArgs) 
-				&& commandlineArgs.Length == 2 && commandlineArgs[1].EndsWith("/restart", StringComparison.InvariantCultureIgnoreCase))//Only exe and /restart
-				return;//Exit here otherwise we add a blank item to list
+			//if (IsApplicationArestartedInstance(commandlineArgs)
+			//    && commandlineArgs.Length == 2 && commandlineArgs[1].EndsWith("/restart", StringComparison.InvariantCultureIgnoreCase))//Only exe and /restart
+			//    return;//Exit here otherwise we add a blank item to list
 
 			if (commandlineArgs.Length == 1)//Could have been initiated without arguments, then Unssuccessful items will load
 				return;

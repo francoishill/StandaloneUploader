@@ -168,6 +168,9 @@
     <Compile Include="..\..\SharedClasses\WebInterop.cs">
       <Link>WebInterop.cs</Link>
     </Compile>
+    <Compile Include="..\..\SharedClasses\Win32Api.cs">
+      <Link>Win32Api.cs</Link>
+    </Compile>
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
