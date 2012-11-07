@@ -86,7 +86,15 @@ namespace StandaloneUploader
 
 		public void AddUploadingItem(UploadingItem itemtoadd)
 		{
-			InvokeOnDispatcher(delegate { currentlyUploadingList.Add(itemtoadd); });
+			InvokeOnDispatcher(delegate
+			{
+				currentlyUploadingList.Add(itemtoadd);
+				itemtoadd.UploadSuccess += (sn, ev) =>
+				{
+					//For now always remove itsself automatically on successful upload
+					InvokeOnDispatcher(delegate { RemoveUploadingItem(sn as UploadingItem); });
+				};
+			});
 		}
 
 		private void InvokeOnDispatcher(Action action)
@@ -141,12 +149,16 @@ namespace StandaloneUploader
 		{
 			var item = GetUploadingItemFromPossibleFrameworkElement(sender);
 			if (item == null) return;
-			if (currentlyUploadingList.Contains(item))
-			{
-				currentlyUploadingList.Remove(item);
-				if (currentlyUploadingList.Count == 0)
-					this.Close();//Exit application
-			}
+			RemoveUploadingItem(item);
+		}
+
+		private void RemoveUploadingItem(UploadingItem item)
+		{
+			if (!currentlyUploadingList.Contains(item))
+				return;
+			currentlyUploadingList.Remove(item);
+			if (currentlyUploadingList.Count == 0)
+				this.Close();//Exit application
 		}
 
 		private void buttonTestCrash(object sender, RoutedEventArgs e)
@@ -310,6 +322,8 @@ namespace StandaloneUploader
 			get { return _removefromlistbuttonvisibility; }
 			set { _removefromlistbuttonvisibility = value; OnPropertyChanged("RemoveFromListButtonVisibility"); }
 		}
+
+		public event EventHandler UploadSuccess = delegate { };
 
 
 		private bool AutoOverwriteIfExists;
@@ -496,7 +510,9 @@ namespace StandaloneUploader
 								{
 									this.CurrentProgressMessage = "Successfully uploaded.";
 									AddSuccessfulUploadToHistory();
+
 									this.RemoveFromListButtonVisibility = Visibility.Visible;
+									UploadSuccess(this, new EventArgs());
 								}
 							}
 							else if (this.ProtocolType == UploadingProtocolTypes.Ownapps)
@@ -546,7 +562,10 @@ namespace StandaloneUploader
 
 								this.CurrentProgressMessage = "Successfully uploaded.";
 								AddSuccessfulUploadToHistory();
+
 								this.RemoveFromListButtonVisibility = Visibility.Visible;
+								UploadSuccess(this, new EventArgs());
+
 								if (!this.MustCancel)
 								{
 									//actionOnStatusMessage("Successfully uploaded.");// + localFilename);
