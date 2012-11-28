@@ -37,6 +37,8 @@ namespace StandaloneUploader
 			listboxCurrentlyUploading.ItemsSource = currentlyUploadingList;
 			LoadUnssuccessfulList();//The items that did not succeed yet (from previous run)
 			LoadCurrentListFromCrashes();//Loads items if there are from crashes (not used only when /restart flag is passed, as it can crash again on startup??)
+
+			UploadingItem.ItemAddedOrRemovedFromList += delegate { WhenItemRemovedOrAdded(); };
 		}
 
 		private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -89,6 +91,7 @@ namespace StandaloneUploader
 			InvokeOnDispatcher(delegate
 			{
 				currentlyUploadingList.Add(itemtoadd);
+				WhenItemRemovedOrAdded();
 				itemtoadd.UploadSuccess += (sn, ev) =>
 				{
 					//For now always remove itsself automatically on successful upload
@@ -157,8 +160,17 @@ namespace StandaloneUploader
 			if (!currentlyUploadingList.Contains(item))
 				return;
 			currentlyUploadingList.Remove(item);
+			WhenItemRemovedOrAdded();
 			if (currentlyUploadingList.Count == 0)
 				this.Close();//Exit application
+		}
+
+		private void WhenItemRemovedOrAdded()
+		{
+			this.Dispatcher.Invoke((Action)delegate
+			{
+				listboxCurrentlyUploading.UpdateLayout();
+			});
 		}
 
 		private void buttonTestCrash(object sender, RoutedEventArgs e)
@@ -275,6 +287,8 @@ namespace StandaloneUploader
 	{
 		public const string cThisAppName = "StandaloneUploader";
 
+		public static event EventHandler ItemAddedOrRemovedFromList = delegate { };
+
 		private static List<UploadingItem> UploadsInProgress = new List<UploadingItem>();
 		private static Queue<UploadingItem> UploadsQueued = new Queue<UploadingItem>();
 
@@ -390,7 +404,8 @@ namespace StandaloneUploader
 			foreach (var line in lines)
 			{
 				var pipeSplits = line.Split('|');
-				if (pipeSplits.Length >= 4)//displayname, protocol, localpath, ftpurl, [username,] [password]
+				if (pipeSplits.Length >= 4)
+				{//displayname, protocol, localpath, ftpurl, [username,] [password]
 					tmplist.Add(new UploadingItem(
 						pipeSplits[0],
 						ParseProtocolTypeFromString(pipeSplits[1]),
@@ -399,6 +414,8 @@ namespace StandaloneUploader
 						pipeSplits[4].Equals("true", StringComparison.InvariantCultureIgnoreCase),
 						pipeSplits.Length >= 6 ? pipeSplits[5] : null,
 						pipeSplits.Length >= 7 ? pipeSplits[6] : null, true, true));
+					ItemAddedOrRemovedFromList(cThisAppName, new EventArgs());
+				}
 				else
 				{
 					allLinesRead = false;
@@ -497,6 +514,7 @@ namespace StandaloneUploader
 					if (UploadsInProgress.Count == 0)
 					{
 						UploadsInProgress.Add(this);
+						ItemAddedOrRemovedFromList(this, new EventArgs());
 
 						try
 						{
@@ -580,6 +598,7 @@ namespace StandaloneUploader
 						finally
 						{
 							UploadsInProgress.Remove(this);//Removes although could have failed, so that next can start
+							ItemAddedOrRemovedFromList(this, new EventArgs());
 							if (UploadsQueued.Count > 0)
 								UploadsQueued.Dequeue().StartUploading();
 						}
