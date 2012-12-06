@@ -41,10 +41,20 @@ namespace StandaloneUploader
 			UploadingItem.ItemAddedOrRemovedFromList += delegate { WhenItemRemovedOrAdded(); };
 		}
 
+		Timer timer;
 		private void Window_Loaded(object sender, RoutedEventArgs e)
 		{
 			this.MaxWidth = SystemParameters.WorkArea.Height;
 			this.MaxHeight = SystemParameters.WorkArea.Width;
+
+			timer = new Timer(delegate
+			{
+				this.Dispatcher.Invoke((Action)delegate
+				{
+					this.UpdateLayout();
+					MakeSmall();//So its immediately a mini version
+				});
+			}, null, 200, System.Threading.Timeout.Infinite);
 		}
 
 		private void LoadUnssuccessfulList()
@@ -91,6 +101,7 @@ namespace StandaloneUploader
 			InvokeOnDispatcher(delegate
 			{
 				currentlyUploadingList.Add(itemtoadd);
+				if (IsSmall()) MakeSmall(true);
 				WhenItemRemovedOrAdded();
 				itemtoadd.UploadSuccess += (sn, ev) =>
 				{
@@ -160,6 +171,7 @@ namespace StandaloneUploader
 			if (!currentlyUploadingList.Contains(item))
 				return;
 			currentlyUploadingList.Remove(item);
+			if (IsSmall()) MakeSmall(true);
 			WhenItemRemovedOrAdded();
 			if (currentlyUploadingList.Count == 0)
 				this.Close();//Exit application
@@ -197,17 +209,21 @@ namespace StandaloneUploader
 		}
 
 		Point? lastNotSmallPos = null;
-		private void MakeSmall()
+		private void MakeSmall(bool redrawEvenIfAlreadySmall = false)
 		{
-			if (IsSmall())
+			if (IsSmall() && !redrawEvenIfAlreadySmall)
 				return;
-			lastNotSmallPos = new Point(this.Left, this.Top);
-			this.mainGrid.LayoutTransform = smallScale;
-			if (this.SizeToContent == System.Windows.SizeToContent.WidthAndHeight)
+			if (!IsSmall())
 			{
-				this.SizeToContent = System.Windows.SizeToContent.Manual;
-				this.UpdateLayout();
-				this.SizeToContent = System.Windows.SizeToContent.WidthAndHeight;
+				lastNotSmallPos = new Point(this.Left, this.Top);
+
+				this.mainGrid.LayoutTransform = smallScale;
+				if (this.SizeToContent == System.Windows.SizeToContent.WidthAndHeight)
+				{
+					this.SizeToContent = System.Windows.SizeToContent.Manual;
+					this.UpdateLayout();
+					this.SizeToContent = System.Windows.SizeToContent.WidthAndHeight;
+				}
 			}
 			this.UpdateLayout();
 			this.Left = SystemParameters.WorkArea.Right - this.ActualWidth;
