@@ -83,11 +83,12 @@ namespace StandaloneUploader
 							+ exception.Message + Environment.NewLine + exception.StackTrace);
 					};
 
-					ThreadingInterop.PerformVoidFunctionSeperateThread(() =>
+					AutoUpdating.CheckForUpdates_ExceptionHandler();
+					/*ThreadingInterop.PerformVoidFunctionSeperateThread(() =>
 					{
 						AutoUpdating.CheckForUpdates(null, null);
 					},
-					false);
+					false);*/
 
 					bool mustAddToList = true;
 					ApplicationRecoveryAndRestart.RegisterForRecoveryAndRestart(

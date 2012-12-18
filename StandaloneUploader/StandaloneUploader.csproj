@@ -87,8 +87,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\AboutWindow2.xaml">
+    <Page Include="..\..\SharedClasses\AboutWindow2.xaml">
       <Link>AboutWindow2.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\SharedClasses\UnhandledExceptionsWindow.xaml">
+      <Link>UnhandledExceptionsWindow.xaml</Link>
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -96,62 +101,69 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\AboutWindow2.xaml.cs">
+    <Compile Include="..\..\SharedClasses\AboutWindow2.xaml.cs">
       <Link>AboutWindow2.xaml.cs</Link>
       <DependentUpon>AboutWindow2.xaml</DependentUpon>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\ApplicationRecoveryAndRestart.cs">
+    <Compile Include="..\..\SharedClasses\ApplicationRecoveryAndRestart.cs">
       <Link>ApplicationRecoveryAndRestart.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\AutoUpdating.cs">
+    <Compile Include="..\..\SharedClasses\AutoUpdating.cs">
       <Link>AutoUpdating.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\CalledFromService.cs">
+    <Compile Include="..\..\SharedClasses\CalledFromService.cs">
       <Link>CalledFromService.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\CheckApplicationTypes.cs">
+    <Compile Include="..\..\SharedClasses\CheckApplicationTypes.cs">
       <Link>CheckApplicationTypes.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\CompareObjects.cs">
+    <Compile Include="..\..\SharedClasses\CompareObjects.cs">
       <Link>CompareObjects.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\fastJSON.cs">
+    <Compile Include="..\..\SharedClasses\DeveloperCommunication.cs">
+      <Link>DeveloperCommunication.cs</Link>
+    </Compile>
+    <Compile Include="..\..\SharedClasses\fastJSON.cs">
       <Link>fastJSON.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\FeedbackMessageTypes.cs">
+    <Compile Include="..\..\SharedClasses\FeedbackMessageTypes.cs">
       <Link>FeedbackMessageTypes.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\Generics.cs">
+    <Compile Include="..\..\SharedClasses\Generics.cs">
       <Link>Generics.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\Logging.cs">
+    <Compile Include="..\..\SharedClasses\Logging.cs">
       <Link>Logging.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\PhpUploadingInterop.cs">
+    <Compile Include="..\..\SharedClasses\PhpUploadingInterop.cs">
       <Link>PhpUploadingInterop.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\ProcessesInterop.cs">
+    <Compile Include="..\..\SharedClasses\ProcessesInterop.cs">
       <Link>ProcessesInterop.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\RegistryInterop.cs">
+    <Compile Include="..\..\SharedClasses\RegistryInterop.cs">
       <Link>RegistryInterop.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\SettingsInterop.cs">
+    <Compile Include="..\..\SharedClasses\SettingsInterop.cs">
       <Link>SettingsInterop.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\SettingsSimple.cs">
+    <Compile Include="..\..\SharedClasses\SettingsSimple.cs">
       <Link>SettingsSimple.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\SingleInstanceApplicationManager.cs">
+    <Compile Include="..\..\SharedClasses\SingleInstanceApplicationManager.cs">
       <Link>SingleInstanceApplicationManager.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\StringExtensions.cs">
+    <Compile Include="..\..\SharedClasses\StringExtensions.cs">
       <Link>StringExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\ThreadingInterop.cs">
+    <Compile Include="..\..\SharedClasses\ThreadingInterop.cs">
       <Link>ThreadingInterop.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\..\Francois\Dev\VSprojects\SharedClasses\UploadingProtocolTypesEnum.cs">
+    <Compile Include="..\..\SharedClasses\UnhandledExceptionsWindow.xaml.cs">
+      <Link>UnhandledExceptionsWindow.xaml.cs</Link>
+      <DependentUpon>UnhandledExceptionsWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="..\..\SharedClasses\UploadingProtocolTypesEnum.cs">
       <Link>UploadingProtocolTypesEnum.cs</Link>
     </Compile>
     <Compile Include="..\..\SharedClasses\AppTypeIndependant.cs">
