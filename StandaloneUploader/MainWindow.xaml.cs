@@ -260,15 +260,11 @@ namespace StandaloneUploader
 
 		private void aboutLabel_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
-			new AboutWindow2(new ObservableCollection<DisplayItem>()
+			AboutWindow2.ShowAboutWindow(new System.Collections.ObjectModel.ObservableCollection<DisplayItem>()
 			{
 				new DisplayItem("Author", "Francois Hill"),
-				new DisplayItem("Icon obtained from", "http://www.visualpharm.com", "http://www.visualpharm.com")
-			})
-			{
-				Owner = this
-			}
-			.ShowDialog();
+				new DisplayItem("Icon(s) obtained from", "http://www.visualpharm.com", "http://www.visualpharm.com")
+			});
 		}
 
 		ScaleTransform currentScale = new ScaleTransform(1, 1);

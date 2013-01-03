@@ -76,12 +76,12 @@ namespace StandaloneUploader
 				},
 				(args, mainwin) =>
 				{
-					AppDomain.CurrentDomain.UnhandledException += (snder, exc) =>
+					/*AppDomain.CurrentDomain.UnhandledException += (snder, exc) =>
 					{
 						Exception exception = (Exception)exc.ExceptionObject;
 						ShowError("Exception" + (exc.IsTerminating ? ", application will now exit" : "") + ":"
 							+ exception.Message + Environment.NewLine + exception.StackTrace);
-					};
+					};*/
 
 					AutoUpdating.CheckForUpdates_ExceptionHandler();
 					/*ThreadingInterop.PerformVoidFunctionSeperateThread(() =>
