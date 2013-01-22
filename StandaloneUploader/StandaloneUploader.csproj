@@ -64,6 +64,9 @@
       <HintPath>..\..\..\..\..\..\..\Francois\Dev\DLLs\Windows API\Microsoft.WindowsAPICodePack.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.Shell">
+      <HintPath>..\..\..\DLLs\Windows API\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -89,6 +92,11 @@
     </ApplicationDefinition>
     <Page Include="..\..\SharedClasses\AboutWindow2.xaml">
       <Link>AboutWindow2.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\SharedClasses\InputBoxWPF.xaml">
+      <Link>InputBoxWPF.xaml</Link>
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -131,6 +139,10 @@
     </Compile>
     <Compile Include="..\..\SharedClasses\Generics.cs">
       <Link>Generics.cs</Link>
+    </Compile>
+    <Compile Include="..\..\SharedClasses\InputBoxWPF.xaml.cs">
+      <Link>InputBoxWPF.xaml.cs</Link>
+      <DependentUpon>InputBoxWPF.xaml</DependentUpon>
     </Compile>
     <Compile Include="..\..\SharedClasses\Logging.cs">
       <Link>Logging.cs</Link>
@@ -196,6 +208,12 @@
     </Compile>
     <Compile Include="..\..\SharedClasses\Win32Api.cs">
       <Link>Win32Api.cs</Link>
+    </Compile>
+    <Compile Include="..\..\SharedClasses\Windows7JumpListsInterop.cs">
+      <Link>Windows7JumpListsInterop.cs</Link>
+    </Compile>
+    <Compile Include="..\..\SharedClasses\WPFdraggableCanvas.cs">
+      <Link>WPFdraggableCanvas.cs</Link>
     </Compile>
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
