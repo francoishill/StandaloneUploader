@@ -94,7 +94,6 @@ namespace StandaloneUploader
 					ApplicationRecoveryAndRestart.RegisterForRecoveryAndRestart(
 					delegate
 					{
-						//TODO: Application Restart and Recovery is there but no use so far?
 						//ApplicationRecoveryAndRestart.WriteCrashReportFile("MonitorSystem", "Application crashed, more details not incorporated yet.");
 						mainwindow.SaveToDiskWhenCrashing();
 					},
