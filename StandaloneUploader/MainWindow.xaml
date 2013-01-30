@@ -1,7 +1,8 @@
 ﻿<Window x:Class="StandaloneUploader.MainWindow"
 		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		Title="MainWindow"
+		Title="Standalone Uploader"
+		Icon='app.ico'
 		Height="300"
 		Width="500"
 		SizeToContent='WidthAndHeight'

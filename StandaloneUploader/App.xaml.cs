@@ -108,7 +108,7 @@ namespace StandaloneUploader
 					});
 
 					mainwindow = mainwin;
-					mainwin.Show();
+					mainwindow.Show();
 					if (mustAddToList)
 						AddUploadingItemToCurrentList(mainwin, args);
 				});

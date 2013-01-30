@@ -19,6 +19,10 @@ using System.Diagnostics;
 using SharedClasses;
 using System.Windows.Interop;
 
+#if PlatformX86
+StandaloneUploader hangs if running in x86 mode, should run in 'Any CPU' mode
+#endif
+
 namespace StandaloneUploader
 {
 	/// <summary>
@@ -54,7 +58,7 @@ namespace StandaloneUploader
 					this.UpdateLayout();
 					MakeSmall();//So its immediately a mini version
 				});
-			}, null, 200, System.Threading.Timeout.Infinite);
+			}, null, 500, System.Threading.Timeout.Infinite);
 		}
 
 		private void LoadUnssuccessfulList()
@@ -111,9 +115,12 @@ namespace StandaloneUploader
 			});
 		}
 
-		private void InvokeOnDispatcher(Action action)
+		private void InvokeOnDispatcher(Action action, bool ratherUseBeginInvoke = false)
 		{
-			Dispatcher.Invoke(action);
+			if (ratherUseBeginInvoke)
+				Dispatcher.BeginInvoke(action);
+			else
+				Dispatcher.Invoke(action);
 		}
 
 		public void SaveToDiskWhenCrashing()
@@ -179,10 +186,11 @@ namespace StandaloneUploader
 
 		private void WhenItemRemovedOrAdded()
 		{
-			this.Dispatcher.Invoke((Action)delegate
+			InvokeOnDispatcher(delegate
 			{
 				listboxCurrentlyUploading.UpdateLayout();
-			});
+			},
+			true);
 		}
 
 		private void buttonTestCrash(object sender, RoutedEventArgs e)
@@ -302,8 +310,7 @@ namespace StandaloneUploader
 		public static event EventHandler ItemAddedOrRemovedFromList = delegate { };
 
 		private static List<UploadingItem> UploadsInProgress = new List<UploadingItem>();
-		private static Queue<UploadingItem> UploadsQueued = new Queue<UploadingItem>();
-
+		private static System.Collections.Concurrent.ConcurrentQueue<UploadingItem> UploadsQueued = new System.Collections.Concurrent.ConcurrentQueue<UploadingItem>();
 		public string DisplayName { get; private set; }
 		private UploadingProtocolTypes ProtocolType;
 
@@ -379,9 +386,10 @@ namespace StandaloneUploader
 			this.DeleteOnlineFileAndRetryButtonVisibility = Visibility.Collapsed;
 			this.RetryUploadButtonVisibility = Visibility.Collapsed;
 			this.RemoveFromListButtonVisibility = Visibility.Collapsed;
+
+			AddToUnssuccesfulList();
 			if (AutoStartUploading)
 				StartUploading();
-			AddToUnssuccesfulList();
 		}
 
 		public bool PropertiesEqualsTo(string DisplayName, UploadingProtocolTypes ProtocolType, string LocalPath, string FtpUrl, string FtpUsername, string FtpPassword)
@@ -611,8 +619,14 @@ namespace StandaloneUploader
 						{
 							UploadsInProgress.Remove(this);//Removes although could have failed, so that next can start
 							ItemAddedOrRemovedFromList(this, new EventArgs());
+
 							if (UploadsQueued.Count > 0)
-								UploadsQueued.Dequeue().StartUploading();
+							{
+								UploadingItem uploadingItem;
+								while (!UploadsQueued.TryDequeue(out uploadingItem))
+									Thread.Sleep(500);
+								uploadingItem.StartUploading();
+							}
 						}
 					}
 					else
@@ -689,13 +703,14 @@ namespace StandaloneUploader
 		}
 		private bool FtpUploadFile(string localFilename, string fullFtpUrl, string userName, string password, Action<string> actionOnError, Action<string> actionOnStatusMessage, Action<int> actionOnProgressChanged_Percentage)
 		{
-			WebInterop.EnsureHttpsTrustAll();
-			string ftpRootUri =
-					fullFtpUrl.Substring(0, fullFtpUrl.Length - Path.GetFileName(fullFtpUrl).Length)
-				.Replace('\\', '/')
-				.TrimEnd('/');
 			try
 			{
+				WebInterop.EnsureHttpsTrustAll();
+				string ftpRootUri =
+					fullFtpUrl.Substring(0, fullFtpUrl.Length - Path.GetFileName(fullFtpUrl).Length)
+					.Replace('\\', '/')
+					.TrimEnd('/');
+
 				bool? fileAlreadyExists = FtpFileExists(this.FtpUrl, this.FtpUsername, this.FtpPassword, true, actionOnError);
 				if (!fileAlreadyExists.HasValue)
 					return false;
