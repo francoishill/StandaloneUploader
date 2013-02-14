@@ -93,7 +93,7 @@ namespace StandaloneUploader
 					it.PropertiesEqualsTo(displayName, ProtocolType, LocalPath, FtpUrl, FtpUsername, FtpPassword));
 			if (alreadyInListCount > 0)
 			{
-				App.ShowError("Cannot add another item with same properties.");
+				App.ShowError("StandaloneUploader: cannot add another item with same properties (url, local filepath, etc).");
 				return;
 			}
 			var itemtoadd = new UploadingItem(displayName, ProtocolType, LocalPath, FtpUrl, AutoOverwriteIfExists, FtpUsername, FtpPassword, AutoStartUploading, true);
